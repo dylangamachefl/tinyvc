@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Main pipeline service
+  tinyvc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tinyvc-pipeline
+    env_file:
+      - .env
+    volumes:
+      # Persist data lake between runs
+      - ./data:/app/data
+      # Mount outputs for easy access
+      - ./outputs:/app/outputs
+      # Development: mount source for hot-reload (comment out for production)
+      - ./src:/app/src
+      - ./schemas:/app/schemas
+      - ./config:/app/config
+      - ./templates:/app/templates
+      - ./prompts:/app/prompts
+    restart: unless-stopped
+    # Uncomment to run pipeline on a schedule (alternative to GitHub Actions)
+    # deploy:
+    #   replicas: 1
+    networks:
+      - tinyvc-network
+
+  # Development: Run tests
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tinyvc-test
+    command: >
+      sh -c "pip install --user -r requirements-dev.txt && 
+             pytest tests/ --tb=short -v"
+    volumes:
+      - ./tests:/app/tests
+      - ./src:/app/src
+      - ./schemas:/app/schemas
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - tinyvc-network
+    profiles:
+      - testing
+
+  # Development: Interactive shell for debugging
+  shell:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tinyvc-shell
+    command: /bin/bash
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./schemas:/app/schemas
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+    stdin_open: true
+    tty: true
+    networks:
+      - tinyvc-network
+    profiles:
+      - dev
+
+networks:
+  tinyvc-network:
+    driver: bridge
+
+volumes:
+  # Named volume for persistent data (alternative to bind mount)
+  data:
+    driver: local

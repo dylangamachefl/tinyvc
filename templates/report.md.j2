@@ -1,0 +1,76 @@
+# tinyvc Report: {{ report_date }}
+
+## Executive Summary
+
+{{ analysis.executive_summary }}
+
+---
+
+## Macro Dashboard
+
+| Indicator | Value | Context |
+|-----------|-------|---------|
+| **Fed Funds Rate** | {{ "%.2f"|format(macro.fed_funds_rate) }}% | Current policy rate |
+| **10Y Treasury** | {{ "%.2f"|format(macro.treasury_10y) }}% | Long-term yield |
+| **CPI (YoY)** | {{ "%.2f"|format(macro.cpi_yoy) }}% | Inflation measure |
+| **Fear & Greed Index** | {{ sentiment.score }} | {{ sentiment.label }} |
+| **Yield Curve** | {% if macro.yield_curve_inverted %}⚠️ Inverted{% else %}✓ Normal{% endif %} | {{ "%.2f"|format(macro.yield_curve_spread) }}% spread |
+
+### What This Means
+
+{{ analysis.macro_interpretation }}
+
+---
+
+## This Week's Opportunities
+
+*Ranked by conviction. You decide how to allocate your ${{ weekly_budget }}.*
+
+{% for opp in analysis.opportunities %}
+### {{ loop.index }}. {{ opp.ticker }} — Conviction: {{ opp.conviction_score }}/10
+
+**Key Metrics:** {{ opp.key_metrics }}
+
+**Bull Case:** {{ opp.bull_case }}
+
+**Bear Case:** {{ opp.bear_case }}
+
+---
+{% endfor %}
+
+## Scenarios to Consider
+
+{% for scenario in analysis.scenarios %}
+### {{ scenario.name }}
+
+{{ scenario.description }}
+
+**Consider:** {{ scenario.suggested_tickers | join(', ') }}
+
+{% endfor %}
+
+---
+
+## Portfolio Diversification
+
+![Correlation Heatmap](correlation_heatmap.png)
+
+*Correlation matrix shows how returns move together. Red = high correlation (avoid overconcentration).*
+
+---
+
+## Themes in Focus
+
+{{ analysis.themes_in_focus }}
+
+---
+
+## Risks to Watch
+
+{{ analysis.risks_to_watch }}
+
+---
+
+*Report generated automatically on {{ generated_at }}. Final allocation  decisions are yours.*
+
+**⚠️ Disclaimer:** This is a personal research tool, not financial advice. Always do your own due diligence before making investment decisions.

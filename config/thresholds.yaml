@@ -1,0 +1,63 @@
+# Quantitative filter thresholds
+
+# ==========================================
+# VALUE FILTERS
+# ==========================================
+value_filters:
+  max_pe_ratio: 40            # Maximum trailing P/E ratio
+  max_peg_ratio: 2.5         # Maximum PEG ratio (PE to growth)
+  min_market_cap: 1000000000  # $1B minimum ($1B = 1e9)
+
+# ==========================================
+# MOMENTUM FILTERS
+# ==========================================
+momentum_filters:
+  max_pct_from_52w_high: 0.35  # Within 35% of 52-week high
+  require_above_200d_ma: false  # Don't exclude quality beaten-down stocks
+
+# ==========================================
+# CORRELATION THRESHOLDS
+# ==========================================
+correlation:
+  max_allowed: 0.85  # Maximum correlation between holdings for diversification
+
+# ==========================================
+# SENTIMENT CONTEXT
+# ==========================================
+# How Fear & Greed scores influence narrative framing
+# NOTE: The system is ADVISORY - these don't trigger automatic buys
+
+sentiment_context:
+  extreme_fear:  # score < 25
+    narrative: "Markets are fearful — historically a good time to accumulate quality"
+    highlight: 
+      - beaten_down_quality
+      - high_growth
+    framing: "Discounts available on strong names"
+    
+  fear:  # score 25-45
+    narrative: "Cautious sentiment — look for overlooked opportunities"
+    highlight:
+      - quality_compounders
+      - ai_compute
+    framing: "Selective buying conditions"
+    
+  neutral:  # score 45-55
+    narrative: "Balanced sentiment — no strong signals either way"
+    highlight:
+      - diversified
+    framing: "Spread across themes or add to existing positions"
+    
+  greed:  # score 55-75
+    narrative: "Optimism is high — be selective on valuation"
+    highlight:
+      - quality_compounders
+      - dividends
+    framing: "Favor proven winners at reasonable prices"
+    
+  extreme_greed:  # score > 75
+    narrative: "Euphoria zone — historically poor entry points"
+    highlight:
+      - quality_compounders
+      - low_volatility
+    framing: "Extra scrutiny on valuation; patience may pay off"

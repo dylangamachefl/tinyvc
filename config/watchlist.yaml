@@ -1,0 +1,63 @@
+# Investment themes and watchlist
+# Group tickers by theme for better analysis
+
+themes:
+  ai_compute:
+    - NVDA
+    - AMD
+    - GOOG
+    - MSFT
+    - META
+  
+  energy_transition:
+    - ENPH
+    - FSLR
+    - NEE
+    - TSLA
+  
+  biotech_longevity:
+    - LLY
+    - VRTX
+    - REGN
+    - ISRG
+  
+  fintech:
+    - V
+    - MA
+    - SQ
+    - PYPL
+  
+  quality_compounders:
+    - AAPL
+    - COST
+    - UNH
+    - BRK-B
+
+# Flat list for processing (auto-generated from themes)
+all_tickers:
+  # AI & Compute
+  - NVDA
+  - AMD
+  - GOOG
+  - MSFT
+  - META
+  # Energy Transition
+  - ENPH
+  - FSLR
+  - NEE
+  - TSLA
+  # Biotech & Longevity
+  - LLY
+  - VRTX
+  - REGN
+  - ISRG
+  # FinTech
+  - V
+  - MA
+  - SQ
+  - PYPL
+  # Quality Compounders
+  - AAPL
+  - COST
+  - UNH
+  - BRK-B

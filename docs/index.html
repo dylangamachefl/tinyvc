@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tinyvc Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .grade {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .grade-a { background: #d1fae5; color: #065f46; }
+        .grade-b { background: #dbeafe; color: #1e40af; }
+        .grade-c { background: #fef3c7; color: #92400e; }
+        .grade-d { background: #fee2e2; color: #991b1b; }
+        
+        .positive { color: #059669; }
+        .negative { color: #dc2626; }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 tinyvc Dashboard</h1>
+            <p>Automated Investment Research Pipeline Analytics</p>
+        </header>
+        
+        <div id="stats-grid" class="stats-grid">
+            <div class="loading">Loading...</div>
+        </div>
+        
+        <div id="evaluations-section" class="section">
+            <h2>🎯 LLM Evaluation Metrics</h2>
+            <div class="loading">Loading evaluations...</div>
+        </div>
+        
+        <div id="performance-section" class="section">
+            <h2>💰 Recommendation Performance</h2>
+            <div class="loading">Loading performance data...</div>
+        </div>
+        
+        <div id="runs-section" class="section">
+            <h2>📅 Pipeline Runs</h2>
+            <div class="loading">Loading runs...</div>
+        </div>
+    </div>
+    
+    <script>
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const [metadata, runs, evaluations, performance] = await Promise.all([
+                    fetch('data/metadata.json').then(r => r.json()),
+                    fetch('data/runs.json').then(r => r.json()),
+                    fetch('data/evaluations.json').then(r => r.json()),
+                    fetch('data/performance.json').then(r => r.json())
+                ]);
+                
+                renderStats(metadata, runs, evaluations, performance);
+                renderEvaluations(evaluations);
+                renderPerformance(performance);
+                renderRuns(runs);
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.body.innerHTML = '<div class="container"><div class="error">Failed to load dashboard data. Make sure to run: python scripts/generate_dashboard.py</div></div>';
+            }
+        }
+        
+        function renderStats(metadata, runs, evaluations, performance) {
+            const statsHtml = `
+                <div class="stat-card">
+                    <h3>Total Runs</h3>
+                    <div class="stat-value">${runs.total}</div>
+                    <div class="stat-label">${metadata.date_range.first} to ${metadata.date_range.last}</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Avg Quality Score</h3>
+                    <div class="stat-value">${(evaluations.average_score * 100).toFixed(0)}%</div>
+                    <div class="stat-label">${evaluations.total_evaluations} evaluations</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Recommendations Tracked</h3>
+                    <div class="stat-value">${performance.total_recommendations}</div>
+                    <div class="stat-label">${performance.summary_1m.count} with 1M returns</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Avg 1M Return</h3>
+                    <div class="stat-value ${performance.summary_1m.avg_return >= 0 ? 'positive' : 'negative'}">
+                        ${performance.summary_1m.avg_return > 0 ? '+' : ''}${performance.summary_1m.avg_return.toFixed(2)}%
+                    </div>
+                    <div class="stat-label">Hit Rate: ${(performance.summary_1m.hit_rate * 100).toFixed(0)}%</div>
+                </div>
+            `;
+            
+            document.getElementById('stats-grid').innerHTML = statsHtml;
+        }
+        
+        function renderEvaluations(evaluations) {
+            if (evaluations.evaluations.length === 0) {
+                document.getElementById('evaluations-section').innerHTML = '<h2>🎯 LLM Evaluation Metrics</h2><p>No evaluations available yet.</p>';
+                return;
+            }
+            
+            const tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Grade</th>
+                            <th>Overall Score</th>
+                            <th>Macro Score</th>
+                            <th>Ticker Accuracy</th>
+                            <th>Issues</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${evaluations.evaluations.map(e => `
+                            <tr>
+                                <td>${e.date}</td>
+                                <td><span class="grade grade-${e.grade.toLowerCase()[0]}">${e.grade}</span></td>
+                                <td>${(e.overall_score * 100).toFixed(1)}%</td>
+                                <td>${(e.macro_score * 100).toFixed(1)}%</td>
+                                <td>${(e.ticker_accuracy * 100).toFixed(1)}%</td>
+                                <td>${e.issues}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('evaluations-section').innerHTML = '<h2>🎯 LLM Evaluation Metrics</h2>' + tableHtml;
+        }
+        
+        function renderPerformance(performance) {
+            if (performance.total_recommendations === 0) {
+                document.getElementById('performance-section').innerHTML = '<h2>💰 Recommendation Performance</h2><p>No recommendations tracked yet.</p>';
+                return;
+            }
+            
+            const recsWithReturns = performance.recommendations.filter(r => r.return_1m !== null);
+            
+            if (recsWithReturns.length === 0) {
+                document.getElementById('performance-section').innerHTML = '<h2>💰 Recommendation Performance</h2><p>Returns not calculated yet. Run: python scripts/backfill_returns.py --all</p>';
+                return;
+            }
+            
+            const tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Ticker</th>
+                            <th>Conviction</th>
+                            <th>Price</th>
+                            <th>1W Return</th>
+                            <th>1M Return</th>
+                            <th>3M Return</th>
+                            <th>Alpha (1M)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${recsWithReturns.slice(0, 20).map(r => `
+                            <tr>
+                                <td>${r.date}</td>
+                                <td><strong>${r.ticker}</strong></td>
+                                <td>${r.conviction_score}</td>
+                                <td>$${r.current_price.toFixed(2)}</td>
+                                <td class="${r.return_1w >= 0 ? 'positive' : 'negative'}">${r.return_1w ? (r.return_1w > 0 ? '+' : '') + r.return_1w.toFixed(2) + '%' : '-'}</td>
+                                <td class="${r.return_1m >= 0 ? 'positive' : 'negative'}">${r.return_1m ? (r.return_1m > 0 ? '+' : '') + r.return_1m.toFixed(2) + '%' : '-'}</td>
+                                <td class="${r.return_3m >= 0 ? 'positive' : 'negative'}">${r.return_3m ? (r.return_3m > 0 ? '+' : '') + r.return_3m.toFixed(2) + '%' : '-'}</td>
+                                <td class="${r.alpha_1m >= 0 ? 'positive' : 'negative'}">${r.alpha_1m ? (r.alpha_1m > 0 ? '+' : '') + r.alpha_1m.toFixed(2) + '%' : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${recsWithReturns.length > 20 ? `<p style="margin-top: 1rem; color: #6b7280;">Showing 20 of ${recsWithReturns.length} recommendations</p>` : ''}
+            `;
+            
+            document.getElementById('performance-section').innerHTML = '<h2>💰 Recommendation Performance</h2>' + tableHtml;
+        }
+        
+        function renderRuns(runs) {
+            const tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Tickers Fetched</th>
+                            <th>Opportunities</th>
+                            <th>Email</th>
+                            <th>Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${runs.runs.map(r => `
+                            <tr>
+                                <td>${r.date}</td>
+                                <td>${r.status}</td>
+                                <td>${r.duration_seconds.toFixed(1)}s</td>
+                                <td>${r.tickers_fetched}</td>
+                                <td>${r.opportunities}</td>
+                                <td>${r.email_delivered ? '✅' : '❌'}</td>
+                                <td>${r.errors}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('runs-section').innerHTML = '<h2>📅 Pipeline Runs</h2>' + tableHtml;
+        }
+        
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

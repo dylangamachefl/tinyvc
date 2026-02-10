@@ -1,0 +1,119 @@
+name: tinyvc Weekly Report
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'  # Every Sunday at 8:00 AM UTC
+  workflow_dispatch:  # Manual trigger for testing
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run tests with coverage
+        run: pytest tests/ --tb=short -v
+
+  generate-report:
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Restore data lake from previous runs
+        uses: actions/cache@v4
+        with:
+          path: data/
+          key: data-lake-${{ github.run_number }}
+          restore-keys: |
+            data-lake-
+      
+      - name: Run pipeline
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          WEEKLY_BUDGET: ${{ secrets.WEEKLY_BUDGET || '50' }}
+          INVESTMENT_HORIZON: ${{ secrets.INVESTMENT_HORIZON || '20' }}
+        run: python src/main.py
+      
+      - name: Generate dashboard data
+        run: python scripts/generate_dashboard.py
+      
+      - name: Save data lake for next run
+        uses: actions/cache@v4
+        with:
+          path: data/
+          key: data-lake-${{ github.run_number }}
+      
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tinyvc-report-${{ github.run_number }}
+          path: |
+            data/reports/
+            docs/
+          retention-days: 90
+
+  deploy-dashboard:
+    needs: generate-report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download report artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: tinyvc-report-${{ github.run_number }}
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          commit_message: "Update dashboard: ${{ github.run_number }}"
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
