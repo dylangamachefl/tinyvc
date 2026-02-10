@@ -108,6 +108,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tinyvc-report-${{ github.run_number }}
+          path: .
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -117,3 +118,4 @@ jobs:
           commit_message: "Update dashboard: ${{ github.run_number }}"
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
+
