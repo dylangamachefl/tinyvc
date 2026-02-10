@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.research_engine import GeminiClient, PromptManager
-from schemas.payload import LLMPayload, MacroEnvironment, OpportunityItem
+from schemas.payload import LLMPayload, MacroEnvironment, OpportunityItem, MarketNews, MarketContext
 from schemas.llm_output import AnalysisOutput
 
 
@@ -28,6 +28,20 @@ class TestGeminiClientIntegration:
                 fear_greed_score=42,
                 fear_greed_label="Fear",
                 sentiment_context="Fearful markets often present buying opportunities"
+            ),
+            market_news=MarketNews(
+                daily_drivers="Tech stocks rally on earnings optimism",
+                sector_context="Technology sector leads market gains",
+                macro_sentiment="Fed signals potential rate pause"
+            ),
+            market_context=MarketContext(
+                trend_signal="Bullish",
+                risk_regime="Risk-On",
+                sector_leaders={
+                    "XLK": 5.2,
+                    "XLF": 3.1,
+                    "XLV": 2.8
+                }
             ),
             opportunities=[
                 OpportunityItem(
