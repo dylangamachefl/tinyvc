@@ -83,39 +83,24 @@ jobs:
           path: data/
           key: data-lake-${{ github.run_number }}
       
-      - name: Upload report artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload dashboard as Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: tinyvc-report-${{ github.run_number }}
-          path: |
-            data/reports/
-            docs/
-          retention-days: 90
-
+          path: docs/
+  
   deploy-dashboard:
     needs: generate-report
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       pages: write
       id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Download report artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: tinyvc-report-${{ github.run_number }}
-          path: .
-      
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          commit_message: "Update dashboard: ${{ github.run_number }}"
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
 
