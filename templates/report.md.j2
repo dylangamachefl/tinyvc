@@ -1,30 +1,62 @@
-# tinyvc Report: {{ report_date }}
+# Market Strategy Report: {{ report_date }}
 
-## Executive Summary
+## 1. Executive Strategy
 
 {{ analysis.executive_summary }}
 
+### Current Market Regime
+
+| Dimension | Signal | Status |
+|-----------|--------|--------|
+| **Market Trend** | {{ market_context.trend_signal }} | SPY vs 200-day MA |
+| **Risk Appetite** | {{ market_context.risk_regime }} | Growth vs Defensive |
+| **Sentiment** | {{ sentiment.label }} ({{ sentiment.score }}/100) | Fear & Greed Index |
+
+### News Narrative
+
+**Daily Market Drivers:**
+{{ market_news.daily_drivers }}
+
+**Sector Context:**
+{{ market_news.sector_context }}
+
+**Macro Sentiment:**
+{{ market_news.macro_sentiment }}
+
 ---
 
-## Macro Dashboard
+## 2. Market Dashboard
+
+### Macro Environment
 
 | Indicator | Value | Context |
 |-----------|-------|---------|
 | **Fed Funds Rate** | {{ "%.2f"|format(macro.fed_funds_rate) }}% | Current policy rate |
 | **10Y Treasury** | {{ "%.2f"|format(macro.treasury_10y) }}% | Long-term yield |
 | **CPI (YoY)** | {{ "%.2f"|format(macro.cpi_yoy) }}% | Inflation measure |
-| **Fear & Greed Index** | {{ sentiment.score }} | {{ sentiment.label }} |
-| **Yield Curve** | {% if macro.yield_curve_inverted %}⚠️ Inverted{% else %}✓ Normal{% endif %} | {{ "%.2f"|format(macro.yield_curve_spread) }}% spread |
+| **Yield Curve** | {% if macro.yield_curve_inverted %}⚠️ Inverted{% else %}✓ Normal{% endif %} | Recession signal? |
 
-### What This Means
+### Strategic Interpretation
 
 {{ analysis.macro_interpretation }}
 
+### Sector Rotation
+
+![Sector Performance](sector_heatmap.png)
+
+*30-day sector returns. Green = outperforming, Red = underperforming.*
+
+### Themes in Focus
+
+{{ analysis.themes_in_focus }}
+
 ---
 
-## This Week's Opportunities
+## 3. Bonus Investment Opportunities
 
-*Ranked by conviction. You decide how to allocate your ${{ weekly_budget }}.*
+*From the candidate pool, here are stocks that align with the current regime.*
+
+*You have ${{ weekly_budget }} to allocate this week. The final decision is yours.*
 
 {% for opp in analysis.opportunities %}
 ### {{ loop.index }}. {{ opp.ticker }} — Conviction: {{ opp.conviction_score }}/10
@@ -38,7 +70,9 @@
 ---
 {% endfor %}
 
-## Scenarios to Consider
+## Allocation Scenarios
+
+*Different approaches for different investor priorities:*
 
 {% for scenario in analysis.scenarios %}
 ### {{ scenario.name }}
@@ -51,7 +85,7 @@
 
 ---
 
-## Portfolio Diversification
+## Portfolio Diversification Check
 
 ![Correlation Heatmap](correlation_heatmap.png)
 
@@ -59,18 +93,14 @@
 
 ---
 
-## Themes in Focus
-
-{{ analysis.themes_in_focus }}
-
----
-
-## Risks to Watch
+## Risks to Monitor
 
 {{ analysis.risks_to_watch }}
 
 ---
 
-*Report generated automatically on {{ generated_at }}. Final allocation  decisions are yours.*
+*Report generated automatically on {{ generated_at }} using the Market Strategist framework (v2).*
+
+*Investment horizon: {{ investment_horizon }} years. Time in the market beats timing the market.*
 
 **⚠️ Disclaimer:** This is a personal research tool, not financial advice. Always do your own due diligence before making investment decisions.

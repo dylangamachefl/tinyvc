@@ -76,4 +76,3 @@ user_prompt_template: |
   - scenarios (2-3 allocation approaches based on different investor priorities, each with: name, description, suggested_tickers)
   - themes_in_focus (which themes/sectors stand out given the current regime)
   - risks_to_watch (key risks investors should monitor)
-

@@ -1,61 +1,71 @@
-# Investment themes and watchlist
-# Group tickers by theme for better analysis
+# Market Strategist Configuration
+# Two-tier structure: Context Universe + Candidate Pool
 
-themes:
-  ai_compute:
-    - NVDA
-    - AMD
-    - GOOG
-    - MSFT
-    - META
-  
-  energy_transition:
-    - ENPH
-    - FSLR
-    - NEE
-    - TSLA
-  
-  biotech_longevity:
-    - LLY
-    - VRTX
-    - REGN
-    - ISRG
-  
-  fintech:
-    - V
-    - MA
-    - SQ
-    - PYPL
-  
-  quality_compounders:
-    - AAPL
-    - COST
-    - UNH
-    - BRK-B
+# ==========================================
+# MARKET UNIVERSE - For Context Analysis
+# ==========================================
+# These tickers are used to calculate market regime signals
+# (trend, rotation, risk appetite) but are NOT individually analyzed
 
-# Flat list for processing (auto-generated from themes)
-all_tickers:
+market_universe:
+  # Broad Market Indices
+  indices:
+    - SPY   # S&P 500
+    - QQQ   # Nasdaq 100
+    - IWM   # Russell 2000
+  
+  # SPDR Sector ETFs (11 sectors)
+  sectors:
+    - XLK   # Technology
+    - XLF   # Financials
+    - XLV   # Healthcare
+    - XLE   # Energy
+    - XLY   # Consumer Discretionary
+    - XLP   # Consumer Staples
+    - XLI   # Industrials
+    - XLU   # Utilities
+    - XLB   # Materials
+    - XLRE  # Real Estate
+    - XLC   # Communication Services
+  
+  # Factor ETFs
+  factors:
+    - MTUM  # Momentum
+    - VLUE  # Value
+    - USMV  # Low Volatility
+
+# ==========================================
+# CANDIDATE POOL - For Bonus Opportunities
+# ==========================================
+# High-quality individual stocks screened through quant filters
+# These are evaluated as "Bonus Investment Ideas" in the report
+
+candidate_pool:
   # AI & Compute
   - NVDA
   - AMD
   - GOOG
   - MSFT
   - META
+  
   # Energy Transition
   - ENPH
   - FSLR
   - NEE
   - TSLA
+  
   # Biotech & Longevity
   - LLY
   - VRTX
   - REGN
   - ISRG
+  
   # FinTech
   - V
   - MA
   - SQ
   - PYPL
+  
   # Quality Compounders
   - AAPL
   - COST

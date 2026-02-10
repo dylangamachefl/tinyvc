@@ -134,3 +134,92 @@ class VisualizationGenerator:
         self.logger.info("opportunity_chart_saved", path=str(output_path))
         
         return output_path
+    
+    def generate_sector_heatmap(
+        self,
+        sector_returns: dict,
+        output_filename: str = "sector_heatmap.png"
+    ) -> Path:
+        """Generate horizontal bar chart of sector performance.
+        
+        Used in Market Strategist reports to visualize sector rotation.
+        
+        Args:
+            sector_returns: Dict mapping sector ticker -> 1-month return %
+            output_filename: Output filename
+            
+        Returns:
+            Path to saved image
+        """
+        self.logger.info("generating_sector_heatmap")
+        
+        if not sector_returns:
+            self.logger.warning("empty_sector_returns_skipping")
+            # Create placeholder
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.text(0.5, 0.5, 'No sector data available',
+                   ha='center', va='center', fontsize=14)
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.axis('off')
+        else:
+            # Map sector tickers to full names
+            sector_names = {
+                'XLK': 'Technology',
+                'XLF': 'Financials',
+                'XLV': 'Healthcare',
+                'XLE': 'Energy',
+                'XLY': 'Consumer Discretionary',
+                'XLP': 'Consumer Staples',
+                'XLI': 'Industrials',
+                'XLU': 'Utilities',
+                'XLB': 'Materials',
+                'XLRE': 'Real Estate',
+                'XLC': 'Communication Services'
+            }
+            
+            # Convert to DataFrame for easier plotting
+            df = pd.DataFrame([
+                {
+                    'sector': sector_names.get(ticker, ticker),
+                    'return': ret
+                }
+                for ticker, ret in sector_returns.items()
+            ])
+            
+            # Sort by return descending (best performers at top)
+            df = df.sort_values('return', ascending=True)
+            
+            # Create figure
+            fig, ax = plt.subplots(figsize=(10, 7))
+            
+            # Horizontal bar chart
+            bars = ax.barh(df['sector'], df['return'])
+            
+            # Color bars: green for positive, red for negative
+            colors = ['green' if r > 0 else 'red' for r in df['return']]
+            for bar, color in zip(bars, colors):
+                bar.set_color(color)
+                bar.set_alpha(0.7)
+            
+            ax.set_xlabel('1-Month Return (%)', fontsize=12)
+            ax.set_title('Sector Performance - Last 30 Days', fontsize=14, pad=20)
+            ax.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
+            
+            # Add return labels
+            for i, (sector, ret) in enumerate(zip(df['sector'], df['return'])):
+                label_x = ret + (0.2 if ret > 0 else -0.2)
+                ax.text(label_x, i, f'{ret:+.1f}%',
+                       va='center', ha='left' if ret > 0 else 'right')
+            
+            plt.tight_layout()
+        
+        # Save
+        output_path = self.output_dir / output_filename
+        plt.savefig(output_path, bbox_inches='tight')
+        plt.close()
+        
+        self.logger.info("sector_heatmap_saved", path=str(output_path))
+        
+        return output_path
+

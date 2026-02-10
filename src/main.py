@@ -19,7 +19,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Import components
-from src.ingestion import FREDClient, YFinanceClient, SentimentClient
+from src.ingestion import FREDClient, YFinanceClient, SentimentClient, NewsClient
 from src.quant_engine import (
     DataValidator,
     OpportunityFilter,
@@ -59,7 +59,7 @@ def run_pipeline():
     # Load configurations
     watchlist_config = load_config()
     thresholds_config = load_thresholds()
-    tickers = watchlist_config.get('all_tickers', [])
+    tickers = watchlist_config.get('candidate_pool', [])  # NEW: Use candidate_pool
     
     logger.info("config_loaded", ticker_count=len(tickers))
     
@@ -80,10 +80,29 @@ def run_pipeline():
     sentiment_client = SentimentClient()
     sentiment = sentiment_client.fetch_fear_greed()
     
+    # Fetch market news (NEW)
+    try:
+        news_client = NewsClient(api_key=os.getenv('TAVILY_API_KEY'))
+        news_data = news_client.fetch_market_narrative()
+    except Exception as e:
+        logger.warning(
+            "news_fetch_failed_using_empty",
+            error=str(e)
+        )
+        # Fallback to empty news rather than crash
+        from schemas.payload import MarketNews
+        news_data = MarketNews()
+    
+    # Fetch market context (NEW)
+    market_universe = watchlist_config.get('market_universe', {})
+    market_context_data = yfinance_client.fetch_market_context(market_universe)
+    
     logger.info(
         "ingestion_complete",
         equities_fetched=len(equity_dataset.equities),
-        fear_greed=sentiment.score
+        fear_greed=sentiment.score,
+        news_queries=3 if news_data.daily_drivers else 0,
+        market_universe_tickers=len(market_context_data)
     )
     
     # ==========================================
@@ -131,6 +150,8 @@ def run_pipeline():
         macro_data=macro_data,
         filtered_df=diversified_df,
         sentiment=sentiment,
+        market_context_data=market_context_data,  # NEW
+        news_data=news_data,  # NEW
         weekly_budget=int(os.getenv('WEEKLY_BUDGET', 50)),
         investment_horizon=int(os.getenv('INVESTMENT_HORIZON', 20))
     )
@@ -169,6 +190,11 @@ def run_pipeline():
     # Opportunity chart
     chart_path = viz_gen.generate_opportunity_chart(diversified_df)
     
+    # Sector heatmap (NEW - for strategist reports)
+    sector_heatmap_path = viz_gen.generate_sector_heatmap(
+        payload.market_context.sector_leaders
+    )
+    
     logger.info("visualizations_generated")
     
     # ==========================================
@@ -181,7 +207,9 @@ def run_pipeline():
         macro_data=macro_data,
         sentiment=sentiment,
         analysis=analysis,
-        weekly_budget=int(os.getenv('WEEKLY_BUDGET', 50))
+        payload=payload,  # NEW - includes market_context and market_news
+        weekly_budget=int(os.getenv('WEEKLY_BUDGET', 50)),
+        investment_horizon=int(os.getenv('INVESTMENT_HORIZON', 20))
     )
     
     # Save report

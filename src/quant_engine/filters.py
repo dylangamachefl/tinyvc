@@ -10,7 +10,12 @@ logger = structlog.get_logger()
 
 
 class OpportunityFilter:
-    """Apply quantitative thresholds to surface investment opportunities.
+    """Apply quantitative thresholds as a quality gate for the candidate pool.
+    
+    In the Market Strategist approach, filters serve to identify eligible
+    'Bonus Opportunities' rather than being the primary focus. The strategist
+    report prioritizes regime analysis, with stock picks presented as secondary
+    ideas that align with the current market environment.
     
     Implements value and momentum filters based on configurable thresholds.
     """
@@ -31,6 +36,10 @@ class OpportunityFilter:
         fear_greed_score: int
     ) -> pd.DataFrame:
         """Apply all filters and calculate opportunity scores.
+        
+        Screens the candidate pool to identify high-quality stocks that may
+        be presented as 'Bonus Investment Ideas' if they align with the
+        current market regime.
         
         Args:
             dataset: Validated equity dataset

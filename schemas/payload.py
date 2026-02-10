@@ -2,7 +2,38 @@
 
 from datetime import date
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+
+class MarketNews(BaseModel):
+    """News narrative from Tavily API."""
+    
+    daily_drivers: str = Field(
+        description="What's moving markets this week",
+        default=""
+    )
+    sector_context: str = Field(
+        description="Sector-specific developments and rotation trends",
+        default=""
+    )
+    macro_sentiment: str = Field(
+        description="Broader macro narrative and Fed outlook",
+        default=""
+    )
+
+
+class MarketContext(BaseModel):
+    """Quantitative market regime signals."""
+    
+    trend_signal: str = Field(
+        description="Market trend: 'Bullish', 'Bearish', or 'Neutral'"
+    )
+    risk_regime: str = Field(
+        description="Risk appetite: 'Risk-On', 'Risk-Off', or 'Mixed'"
+    )
+    sector_leaders: Dict[str, float] = Field(
+        description="1-month sector performance rankings (ticker -> return %)"
+    )
 
 
 class MacroEnvironment(BaseModel):
@@ -40,13 +71,23 @@ class LLMPayload(BaseModel):
     weekly_budget_usd: int
     investment_horizon_years: int
     
+    # Market Context (NEW - for strategist analysis)
+    market_news: MarketNews = Field(
+        description="News narrative from Tavily API"
+    )
+    market_context: MarketContext = Field(
+        description="Quantitative market regime signals"
+    )
+    
+    # Traditional Data
     macro_environment: MacroEnvironment
     opportunities: List[OpportunityItem] = Field(
         min_length=1,
-        description="Ranked investment opportunities"
+        description="Ranked investment opportunities from candidate pool"
     )
-    themes: Dict[str, List[str]] = Field(
-        description="Grouping of tickers by theme"
+    themes: Optional[Dict[str, List[str]]] = Field(
+        default=None,
+        description="Legacy field - may be deprecated"
     )
     
     model_config = ConfigDict(

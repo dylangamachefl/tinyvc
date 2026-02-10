@@ -82,6 +82,90 @@ class YFinanceClient:
         
         return dataset
     
+    def fetch_market_context(
+        self,
+        universe_dict: dict
+    ) -> dict:
+        """Fetch price data for market universe (indices, sectors, factors).
+        
+        This data is used for regime calculation (trend, rotation, risk) 
+        but NOT for individual stock analysis.
+        
+        Args:
+            universe_dict: Dict with 'indices', 'sectors', 'factors' keys
+            
+        Returns:
+            Dict mapping ticker -> pandas Series of Close prices (1 year)
+        """
+        self.logger.info("fetch_market_context_started")
+        
+        # Flatten all tickers from universe
+        all_universe_tickers = []
+        for category in ['indices', 'sectors', 'factors']:
+            if category in universe_dict:
+                all_universe_tickers.extend(universe_dict[category])
+        
+        if not all_universe_tickers:
+            raise ValueError("Market universe is empty")
+        
+        self.logger.info(
+            "fetching_universe_tickers",
+            count=len(all_universe_tickers),
+            tickers=all_universe_tickers
+        )
+        
+        # Use batch download for efficiency (reduces API calls)
+        try:
+            # Fetch 1 year of data, Close price only
+            data = yf.download(
+                tickers=all_universe_tickers,
+                period="1y",
+                interval="1d",
+                group_by="ticker",
+                auto_adjust=True,
+                progress=False
+            )
+            
+            market_context = {}
+            
+            # Handle single ticker vs multiple tickers
+            if len(all_universe_tickers) == 1:
+                ticker = all_universe_tickers[0]
+                if 'Close' in data.columns:
+                    market_context[ticker] = data['Close']
+            else:
+                for ticker in all_universe_tickers:
+                    try:
+                        # Extract Close prices for this ticker
+                        if ticker in data.columns.get_level_values(0):
+                            close_prices = data[ticker]['Close']
+                            market_context[ticker] = close_prices
+                        else:
+                            self.logger.warning(
+                                "ticker_missing_from_download",
+                                ticker=ticker
+                            )
+                    except Exception as e:
+                        self.logger.warning(
+                            "ticker_extraction_failed",
+                            ticker=ticker,
+                            error=str(e)
+                        )
+            
+            self.logger.info(
+                "market_context_fetched",
+                tickers_retrieved=len(market_context)
+            )
+            
+            return market_context
+            
+        except Exception as e:
+            self.logger.error(
+                "market_context_fetch_failed",
+                error=str(e)
+            )
+            raise
+    
     def _fetch_single_ticker(
         self,
         ticker: str,

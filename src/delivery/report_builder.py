@@ -8,6 +8,7 @@ import structlog
 from schemas.macro import MacroData
 from schemas.sentiment import SentimentData
 from schemas.llm_output import AnalysisOutput
+from schemas.payload import LLMPayload
 
 logger = structlog.get_logger()
 
@@ -29,7 +30,9 @@ class ReportBuilder:
         macro_data: MacroData,
         sentiment: SentimentData,
         analysis: AnalysisOutput,
-        weekly_budget: int = 50
+        payload: LLMPayload,
+        weekly_budget: int = 50,
+        investment_horizon: int = 20
     ) -> str:
         """Build complete markdown report.
         
@@ -37,7 +40,9 @@ class ReportBuilder:
             macro_data: Macroeconomic data
             sentiment: Sentiment data
             analysis: LLM analysis output
+            payload: Full LLM payload (includes market_context and market_news)
             weekly_budget: Weekly investment budget
+            investment_horizon: Investment time horizon in years
             
         Returns:
             Compiled markdown string
@@ -54,7 +59,10 @@ class ReportBuilder:
             macro=macro_data,
             sentiment=sentiment,
             analysis=analysis,
-            weekly_budget=weekly_budget
+            market_context=payload.market_context,  # NEW
+            market_news=payload.market_news,  # NEW
+            weekly_budget=weekly_budget,
+            investment_horizon=investment_horizon
         )
         
         self.logger.info("report_build_complete", length=len(report))
