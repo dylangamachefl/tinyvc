@@ -1,7 +1,7 @@
 """DataLake integration tests - validate save/load round-trips."""
 
 import pytest
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 import shutil
 
@@ -158,7 +158,7 @@ class TestDataLake:
         metadata = RunMetadata(
             run_date=test_date,
             started_at=start,
-            completed_at=datetime(start.year, start.month, start.day, start.hour, start.minute + 5),
+            completed_at=start + timedelta(minutes=5),
             status="success",
             tickers_fetched=15,
             tickers_passed_filter=8,
