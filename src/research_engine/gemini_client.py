@@ -80,6 +80,9 @@ class GeminiClient:
                 self.logger.debug("parsing_json_response")
                 parsed = self._extract_json(response_text)
                 
+                # Normalize LLM output (convert lists to strings if needed)
+                parsed = self._normalize_llm_output(parsed)
+                
                 # Validate against schema
                 analysis = AnalysisOutput.model_validate(parsed)
                 
@@ -161,3 +164,32 @@ class GeminiClient:
         except json.JSONDecodeError as e:
             self.logger.error("json_parse_failed", error=str(e), text_preview=text[:200])
             raise
+    
+    def _normalize_llm_output(self, parsed: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize LLM output to match schema expectations.
+        
+        Sometimes the LLM returns lists when strings are expected.
+        Convert them to comma-separated strings.
+        
+        Args:
+            parsed: Raw parsed JSON from LLM
+            
+        Returns:
+            Normalized dict matching schema
+        """
+        # Convert list fields to strings if needed
+        list_to_string_fields = ['themes_in_focus', 'risks_to_watch']
+        
+        for field in list_to_string_fields:
+            if field in parsed and isinstance(parsed[field], list):
+                # Join list items with commas
+                parsed[field] = ', '.join(str(item) for item in parsed[field])
+                self.logger.debug(
+                    "normalized_list_field",
+                    field=field,
+                    original_type="list",
+                    converted_to="string"
+                )
+        
+        return parsed
+
