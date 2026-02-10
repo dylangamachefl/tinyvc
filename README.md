@@ -1,23 +1,25 @@
 # tinyvc
 
-> **Automated Investment Research Pipeline** — Quantitative screening + LLM analysis delivered weekly via email
+> **Automated Market Strategy Pipeline** — Top-down regime analysis + news integration + LLM strategist delivered weekly via email
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Pydantic v2](https://img.shields.io/badge/pydantic-v2-green.svg)](https://pydantic.dev/)
-[![Tests](https://img.shields.io/badge/tests-9%2F9%20passing-success.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-31%2F31%20passing-success.svg)](tests/)
 
 ---
 
 ## 🎯 What It Does
 
-**tinyvc** is a fully automated investment research system that:
+**tinyvc** is a fully automated market strategy system that takes a **top-down approach**:
 
-1. **Ingests** macro data (FRED), stock fundamentals (yFinance), and market sentiment (Fear & Greed)
-2. **Filters** opportunities using value + momentum screens with correlation-based diversification
-3. **Analyzes** via Google's Gemini LLM with structured prompts and validated JSON output
-4. **Delivers** markdown reports + visualizations to your inbox weekly
+1. **Ingests** macro data (FRED), market news (Tavily), sentiment (Fear & Greed), and market universe prices (yFinance)
+2. **Analyzes** market regime (trend, risk appetite, sector rotation) before looking at individual stocks
+3. **Synthesizes** via Google's Gemini LLM as a "Chief Market Strategist" with structured prompts
+4. **Delivers** strategic reports + sector heatmaps + bonus stock ideas to your inbox weekly
 
-**Result:** A personalized, data-driven investment brief in your inbox every week — zero manual work required.
+**Key Paradigm Shift:** The report starts with **market regime analysis**, then presents stocks as **bonus opportunities** that align with the current environment — not the other way around.
+
+**Result:** A strategic market outlook that tells you *what the market is doing* first, then *where opportunities might be* second.
 
 ---
 
@@ -40,6 +42,7 @@ Add your keys:
 ```env
 FRED_API_KEY=your_key_here              # Get from https://fred.stlouisfed.org
 GEMINI_API_KEY=your_key_here            # Get from https://ai.google.dev
+TAVILY_API_KEY=your_key_here            # Get from https://tavily.com (NEW!)
 SMTP_USER=your@gmail.com
 SMTP_PASSWORD=your_gmail_app_password   # NOT your regular password!
 RECIPIENT_EMAIL=your@gmail.com
@@ -52,9 +55,10 @@ python src/main.py
 ```
 
 **Output:**
-- `outputs/report.md` — Your weekly brief
-- `outputs/correlation_heatmap.png` — Diversification matrix  
-- `outputs/opportunities_chart.png` — Top picks ranked
+- `outputs/report.md` — Your weekly market strategy brief
+- `outputs/sector_heatmap.png` — Sector rotation visualization ✨ NEW
+- `outputs/correlation_heatmap.png` — Portfolio diversification matrix  
+- `outputs/opportunities_chart.png` — Bonus stock picks ranked
 - **Email** — Report delivered to your inbox
 
 ---
@@ -62,45 +66,51 @@ python src/main.py
 ## 📊 Architecture
 
 ```
-┌─────────────────┐
-│   Data Sources  │
-│  FRED │ yF │ CNN│
-└────────┬────────┘
-         │
-    ┌────▼────────────────┐
-    │  Ingestion Layer    │
-    │  • Retry logic      │
-    │  • Rate limiting    │
-    │  • Validation       │
-    └────┬────────────────┘
-         │
-    ┌────▼────────────────┐
-    │ Quantitative Engine │
-    │  • Value filters    │
-    │  • Momentum checks  │
-    │  • Correlation      │
-    └────┬────────────────┘
-         │
-    ┌────▼────────────────┐
-    │  Research Engine    │
-    │  • Gemini LLM       │
-    │  • JSON extraction  │
-    │  • Validation       │
-    └────┬────────────────┘
-         │
-    ┌────▼────────────────┐
-    │   Delivery Layer    │
-    │  • Jinja2 reports   │
-    │  • Visualizations   │
-    │  • Email (SMTP)     │
-    └─────────────────────┘
+┌─────────────────────────────┐
+│      Data Sources           │
+│ FRED │ yF │ Tavily │ F&G   │
+└──────────┬──────────────────┘
+           │
+    ┌──────▼─────────────────────┐
+    │   Ingestion Layer          │
+    │  • Macro data (FRED)       │
+    │  • Market universe (yF)    │
+    │  • Candidate pool (yF)     │
+    │  • News narrative (Tavily) │ ✨ NEW
+    │  • Sentiment (Fear & Greed)│
+    └──────┬─────────────────────┘
+           │
+    ┌──────▼─────────────────────┐
+    │  Quantitative Engine       │
+    │  • Market regime calc      │ ✨ NEW
+    │  • Sector rotation         │ ✨ NEW
+    │  • Quality gate filters    │
+    │  • Correlation analysis    │
+    └──────┬─────────────────────┘
+           │
+    ┌──────▼─────────────────────┐
+    │  Research Engine           │
+    │  • Gemini LLM (v2 prompt)  │ ✨ UPDATED
+    │  • Market Strategist role  │ ✨ NEW
+    │  • Top-down analysis       │ ✨ NEW
+    │  • JSON extraction         │
+    └──────┬─────────────────────┘
+           │
+    ┌──────▼─────────────────────┐
+    │    Delivery Layer          │
+    │  • Strategic reports       │ ✨ UPDATED
+    │  • Sector heatmaps         │ ✨ NEW
+    │  • Bonus opportunities     │
+    │  • Email (SMTP)            │
+    └────────────────────────────┘
 ```
 
 **Key Design Principles:**
+- **Top-down first:** Analyze market regime → sectors → stocks (not the reverse)
+- **News-aware:** Integrates real-time market narrative from Tavily
+- **Regime-aligned:** Stock picks must match the current market environment
 - **Schema-first:** Pydantic validation at every boundary
-- **Separation of concerns:** Deterministic (quant) vs probabilistic (LLM) clearly split
 - **Advisory, not prescriptive:** Human stays in the loop
-- **Reproducible:** Versioned prompts, test fixtures, mocked API responses
 
 ---
 
@@ -108,21 +118,40 @@ python src/main.py
 
 ### Watchlist (`config/watchlist.yaml`)
 
-Define your investment universe:
+**New Two-Tier Structure:**
 
 ```yaml
-themes:
-  ai_infrastructure:
-    - NVDA
-    - GOOGL
-  cloud_saas:
-    - CRM
-    - SNOW
+market_universe:
+  indices:
+    - SPY    # S&P 500
+    - QQQ    # Nasdaq
+    - IWM    # Russell 2000
+  
+  sectors:
+    - XLK    # Technology
+    - XLF    # Financials
+    - XLV    # Healthcare
+    # ... all 11 SPDR sectors
+  
+  factors:
+    - MTUM   # Momentum
+    - VLUE   # Value
+    - USMV   # Low Volatility
+
+candidate_pool:
+  - NVDA   # Individual stocks to screen
+  - GOOGL
+  - COST
+  # ... your stock picks
 ```
+
+**Philosophy Change:**
+- `market_universe` → Context for regime analysis
+- `candidate_pool` → Stocks screened as "bonus opportunities"
 
 ### Filters (`config/thresholds.yaml`)
 
-Adjust screening criteria:
+Filters now act as a **quality gate** for the candidate pool:
 
 ```yaml
 value_filters:
@@ -134,17 +163,21 @@ momentum_filters:
   require_200d_ma: true    # Must be above 200D MA
 ```
 
-### Prompts (`prompts/v1.yaml`)
+### Prompts (`prompts/current.yaml`)
 
-Customize LLM behavior:
+**V2 "Market Strategist" Prompt:**
 
 ```yaml
-system: |
-  You are a senior equity analyst...
-user_template: |
-  Weekly Budget: {{weekly_budget_usd}}
-  Horizon: {{investment_horizon_years}} years
-  ...
+version: 2
+system_prompt: |
+  You are a Chief Market Strategist preparing a weekly market outlook.
+  
+  CRITICAL FRAMEWORK - TOP-DOWN APPROACH:
+  1. Start with the BIG PICTURE (regime, trend, risk, news)
+  2. Discuss sector rotation
+  3. ONLY THEN present stocks as "Bonus Opportunities"
+  
+  Stock recommendations must ALIGN with identified market regime.
 ```
 
 ---
@@ -163,9 +196,10 @@ pytest --cov=src --cov-report=html
 ```
 
 **Test Coverage:**
-- ✅ 9/9 unit tests passing
-- ✅ Schema validation (macro, sentiment, equities, LLM output)
+- ✅ 31/31 tests passing
+- ✅ Schema validation (macro, sentiment, equities, news, market context)
 - ✅ Data validator completeness checks
+- ✅ Market regime calculations
 - ✅ Opportunity filter logic
 - ✅ Integration tests (mocked API clients)
 
@@ -177,29 +211,43 @@ pytest --cov=src --cov-report=html
 tinyvc/
 ├── src/
 │   ├── main.py                 # Pipeline orchestrator
-│   ├── ingestion/              # Data fetching (FRED, yFinance, CNN)
-│   ├── quant_engine/           # Filtering, scoring, correlation
-│   ├── research_engine/        # Gemini LLM integration
-│   └── delivery/               # Reports, visualizations, email
-├── schemas/                    # Pydantic validation models
+│   ├── ingestion/
+│   │   ├── fred_client.py      # Macro data
+│   │   ├── yfinance_client.py  # Equities + market universe
+│   │   ├── news_client.py      # Tavily integration ✨ NEW
+│   │   └── sentiment_client.py # Fear & Greed
+│   ├── quant_engine/
+│   │   ├── payload_builder.py  # Regime calculations ✨ UPDATED
+│   │   ├── filters.py          # Quality gate
+│   │   └── correlation.py      # Diversification
+│   ├── research_engine/
+│   │   ├── gemini_client.py    # LLM integration ✨ UPDATED
+│   │   └── prompts.py          # Prompt manager
+│   └── delivery/
+│       ├── report_builder.py   # Markdown generation ✨ UPDATED
+│       ├── visualizations.py   # Charts + sector heatmap ✨ UPDATED
+│       └── email_sender.py     # SMTP delivery
+├── schemas/
+│   ├── payload.py              # LLM input (w/ MarketNews, MarketContext) ✨ UPDATED
+│   ├── llm_output.py           # LLM response
 │   ├── macro.py
 │   ├── sentiment.py
-│   ├── equities.py
-│   ├── payload.py              # LLM input
-│   └── llm_output.py           # LLM response
+│   └── equities.py
 ├── config/
-│   ├── watchlist.yaml          # Your stock picks
+│   ├── watchlist.yaml          # Market universe + candidate pool ✨ UPDATED
 │   └── thresholds.yaml         # Filter settings
 ├── prompts/
-│   └── v1.yaml                 # LLM prompt template
+│   ├── current.yaml            # Active prompt (v2) ✨ UPDATED
+│   ├── v2.yaml                 # Market Strategist ✨ NEW
+│   └── v1.yaml                 # Legacy stock picker
 ├── templates/
-│   └── report.md.j2            # Report template
+│   └── report.md.j2            # Three-section strategist template ✨ UPDATED
 ├── tests/
-│   ├── unit/                   # Unit tests
-│   ├── integration/            # Integration tests
-│   └── fixtures/               # Test data
+│   ├── unit/
+│   ├── integration/
+│   └── fixtures/
 ├── outputs/                    # Generated reports
-└── data/                       # Data lake (future)
+└── data/                       # Data lake
 ```
 
 ---
@@ -208,10 +256,10 @@ tinyvc/
 
 | Layer | Technology |
 |-------|-----------|
-| **Data Ingestion** | fredapi, yfinance, BeautifulSoup |
+| **Data Ingestion** | fredapi, yfinance, tavily-python ✨ NEW, BeautifulSoup |
 | **Validation** | Pydantic v2 |
 | **Analysis** | pandas, numpy |
-| **LLM** | Google Gemini 1.5 Flash |
+| **LLM** | Google Gemini 3-27B-IT |
 | **Visualization** | matplotlib, seaborn |
 | **Reporting** | Jinja2, markdown |
 | **Email** | SMTP (Gmail) |
@@ -222,112 +270,128 @@ tinyvc/
 
 ## 📈 Example Output
 
-### Report Snippet
+### Report Structure (V2)
 
 ```markdown
-# Weekly Investment Brief — Feb 9, 2025
+# Market Strategy Report — Feb 10, 2026
 
-## 📊 Market Dashboard
-- **Fed Funds Rate:** 4.33%
-- **10Y Treasury:** 4.49%
-- **Yield Curve:** -0.33% (⚠️ Inverted)
-- **Fear & Greed:** 42 (Fear)
+## 1. Executive Strategy
 
-## 💎 Top Opportunities
+**Current Market Regime:**
+- Trend: Bullish (SPY above 200-day MA)
+- Risk: Risk-On (Growth outperforming Defensive)
+- Sentiment: Fear (42/100)
 
-### 1. GOOGL — Technology (Conviction: 89/100)
+**News Narrative:**
+- Daily Drivers: Tech stocks rally on earnings optimism
+- Sector Context: Technology sector leads market gains
+- Macro Sentiment: Fed signals potential rate pause
 
-**Bull Case:** Market-leading position in AI compute with strong FCF...
-**Bear Case:** Regulatory headwinds and advertising slowdown...
-**Key Metrics:** PE: 22.5, PEG: 1.2, -12% from 52W high
+## 2. Market Dashboard
+
+### Sector Rotation
+[Sector Heatmap: Technology +5.2%, Financials +3.1%, ...]
+
+### Strategic Interpretation
+The market is in a Risk-On environment with bullish technicals...
+
+## 3. Bonus Investment Opportunities
+
+From the candidate pool, here are stocks that align with Risk-On:
+
+### 1. NVDA — Conviction: 9/10
+**Bull Case:** Market leader in AI compute...
+**Bear Case:** Valuation concerns at 45x P/E...
+**Key Metrics:** PE: 45.2, PEG: 1.8, -8% from 52W high
 ```
 
 ### Visualizations
 
-- **Correlation Heatmap:** Ensures portfolio diversification (max 0.85 correlation)
-- **Opportunity Chart:** Top picks ranked by conviction score
+- **Sector Heatmap:** 30-day performance of all 11 sectors ✨ NEW
+- **Correlation Matrix:** Portfolio diversification check
+- **Opportunity Chart:** Bonus picks ranked by conviction
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] **Phase 1:** Core Pipeline (MVP) ✅
+- [x] **Phase 1:** Core Pipeline (Stock Picker MVP) ✅
 - [x] **Phase 1.5:** Engineering Rigor (Testing) ✅
-- [ ] **Phase 2:** Data Lake + Historical Tracking
+- [x] **Phase 2:** Market Strategist Pivot ✅ **← YOU ARE HERE**
 - [ ] **Phase 2.5:** Evaluation Framework (LLM groundedness)
 - [ ] **Phase 3:** GitHub Pages Dashboard
-- [ ] **Phase 4:** CI/CD with GitHub Actions
+- [ ] **Phase 4:** CI/CD with GitHub Actions (Weekly Runs) ✅ Workflow Created
 
 ---
 
-## 🤝 Contributing
+## 🔍 What's New in V2 (Market Strategist)
 
-See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) for development workflow, testing guidelines, and PR process.
+### Conceptual Changes
 
----
+| Before (V1) | After (V2) |
+|-------------|------------|
+| Bottom-up stock picker | Top-down market strategist |
+| "Here are 10 stocks to buy" | "Here's the market regime, and IF deploying capital, consider these" |
+| Themes organized stocks | Market universe provides context |
+| Filters were primary screen | Filters are quality gate for bonus picks |
 
-## 📝 License
+### Technical Additions
 
-MIT License - See [LICENSE](LICENSE) for details.
+✨ **Tavily API Integration** — Real-time market news narrative  
+✨ **Market Regime Calculations** — Trend signal, risk regime, sector rotation  
+✨ **Sector Heatmap Visualization** — 30-day performance chart  
+✨ **V2 Prompt Template** — "Chief Market Strategist" persona  
+✨ **Three-Section Report** — Executive Strategy → Dashboard → Bonus Ideas  
+✨ **Regime Alignment Logic** — Stocks must fit current environment  
 
----
+### Migration Guide
 
-## 🔍 Key Features
+If upgrading from V1:
 
-### 🎯 Smart Filtering
-- **Value screens:** PE, PEG, price-to-book ratios
-- **Momentum indicators:** 52W high proximity, MA crossovers
-- **Diversification:** Correlation-based position limits (max 0.85)
-
-### 🧠 LLM Integration
-- **Structured prompts:** Versioned YAML templates
-- **JSON validation:** Pydantic schemas enforce output contracts
-- **Retry logic:** Automatic fallback for API failures
-
-### 📧 Automated Delivery
-- **Markdown reports:** Template-based generation
-- **Visualizations:** Correlation heatmaps, opportunity charts
-- **Email delivery:** HTML formatting with file attachments
-
-### ✅ Production-Ready
-- **Type safety:** Full Pydantic v2 validation
-- **Error handling:** Graceful degradation with logging
-- **Testing:** Comprehensive unit + integration tests
-- **Reproducibility:** Mocked API responses for tests
+1. **Update `watchlist.yaml`** to new two-tier format
+2. **Get Tavily API key** from https://tavily.com
+3. **Add `TAVILY_API_KEY`** to `.env` and GitHub Secrets
+4. **Run `pip install -r requirements.txt`** to get `tavily-python`
 
 ---
 
 ## 💡 Philosophy
 
-**Why tinyvc exists:**
+**Why the Market Strategist pivot?**
 
-1. **Democratize research tools:** Institutional-grade analysis should be accessible
-2. **Human + AI synergy:** Quant screens + LLM analysis > either alone
-3. **Reduce bias:** Structured data flows prevent cherry-picking
-4. **Save time:** Automate repetitive tasks, focus on decision-making
+V1 was a **stock picker** — it found individual opportunities and presented them.
+
+V2 is a **market strategist** — it analyzes the macro environment first, understands what regime we're in, then presents stocks as *secondary* ideas that align with that regime.
+
+**The difference matters:**
+
+- In **Risk-Off** markets → Recommend defensive quality, not high-beta growth
+- In **Bullish trends** → Growth ideas make sense
+- In **Bearish trends** → Cash preservation or hedges take priority
 
 **Design ethos:**
 
+- Top-down beats bottom-up for portfolio construction
+- Regime awareness prevents fighting the tape
+- News narrative provides qualitative context
+- Stocks are tools to express a view, not the view itself
 - Advisory, not prescriptive — you make the final calls
-- Explainable — every recommendation includes bull/bear cases
-- Transparent — open-source prompts and filter logic
-- Testable — every component is unit-tested
 
 ---
 
 ## 🙋 FAQ
 
 **Q: How much does it cost to run?**  
-A: API costs are minimal — ~$0.10/week (FRED free, Gemini cheapest tier, Gmail free).
+A: API costs are minimal — ~$0.15/week (FRED free, Gemini cheapest tier, Tavily free tier, Gmail free).
 
-**Q: Can I customize the filters?**  
-A: Yes! Edit `config/thresholds.yaml` to adjust PE ratios, momentum thresholds, etc.
+**Q: What's the difference between market_universe and candidate_pool?**  
+A: `market_universe` tickers (indices, sectors, factors) provide context for regime analysis. `candidate_pool` are individual stocks screened as bonus opportunities.
 
-**Q: How does correlation filtering work?**  
-A: The system calculates pairwise correlations between stocks and removes highly correlated holdings (>0.85) to ensure diversification.
+**Q: Does the LLM make the regime calculations?**  
+A: No! Regime signals (trend, risk, rotation) are **quantitative** — calculated deterministically in `payload_builder.py`. The LLM only synthesizes them into narrative.
 
-**Q: Can I switch LLM providers?**  
-A: Currently Gemini-only, but the `research_engine/` is designed to be swappable.
+**Q: Can I switch back to V1 stock picker mode?**  
+A: Technically yes (point `current.yaml` at `v1.yaml`), but you'd lose news/regime context.
 
 **Q: Is this financial advice?**  
 A: **No.** This is a research tool. Always do your own due diligence.
@@ -337,9 +401,9 @@ A: **No.** This is a research tool. Always do your own due diligence.
 ## 🔗 Resources
 
 - **Quickstart Guide:** [`docs/quickstart.md`](docs/quickstart.md)
-- **Architecture Deep Dive:** [`docs/walkthrough.md`](C:\Users\Dylan\.gemini\antigravity\brain\bb2224a0-fac1-4e27-8704-3fb8226d5d98\walkthrough.md)
-- **Implementation Details:** [`docs/plan_review.md`](C:\Users\Dylan\.gemini\antigravity\brain\bb2224a0-fac1-4e27-8704-3fb8226d5d98\plan_review.md)
+- **Deployment Guide:** [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- **Tavily Setup:** See artifact walkthrough for API key configuration
 
 ---
 
-**Built with ❤️ for data-driven investors**
+**Built with ❤️ for strategic, data-driven investors**
