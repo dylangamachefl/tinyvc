@@ -96,6 +96,15 @@ class DataValidator:
             )
             valid_equities.append(equity)
         
+        # Check if any valid equities remain
+        if not valid_equities:
+            self.logger.error(
+                "validation_failed",
+                reason="all_tickers_dropped",
+                dropped_count=len(dropped_tickers)
+            )
+            raise ValueError("All tickers failed validation - no valid data to analyze")
+        
         validated_dataset = EquityDataset(
             equities=valid_equities,
             fetched_at=dataset.fetched_at
