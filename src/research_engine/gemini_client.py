@@ -120,13 +120,17 @@ class GeminiClient:
         # Convert payload to JSON
         json_payload = payload.model_dump_json(indent=2)
         
-        # Format user prompt
+        # Format user prompt (includes template variables for v2 strategist prompt)
         user_prompt = self.prompt_manager.format_user_prompt(
             json_payload=json_payload,
             weekly_budget=payload.weekly_budget_usd,
             investment_horizon=payload.investment_horizon_years,
             fear_greed_label=payload.macro_environment.fear_greed_label,
-            fear_greed_score=payload.macro_environment.fear_greed_score
+            fear_greed_score=payload.macro_environment.fear_greed_score,
+            # NEW: For v2 strategist prompt template variables
+            market_context=payload.market_context,
+            market_news=payload.market_news,
+            macro_environment=payload.macro_environment
         )
         
         # Combine system + user
