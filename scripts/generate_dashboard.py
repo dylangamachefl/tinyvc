@@ -139,7 +139,12 @@ def generate_performance_summary(tracker: PerformanceTracker) -> Dict[str, Any]:
     if not rec_files:
         return {
             "total_recommendations": 0,
-            "recommendations": []
+            "recommendations": [],
+            "summary_1m": {
+                "count": 0,
+                "avg_return": 0,
+                "hit_rate": 0
+            }
         }
     
     all_recommendations = []
