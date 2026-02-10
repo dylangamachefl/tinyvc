@@ -72,10 +72,10 @@ jobs:
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           WEEKLY_BUDGET: ${{ secrets.WEEKLY_BUDGET || '50' }}
           INVESTMENT_HORIZON: ${{ secrets.INVESTMENT_HORIZON || '20' }}
-        run: python src/main.py
+        run: python -m src.main
       
       - name: Generate dashboard data
-        run: python scripts/generate_dashboard.py
+        run: python -m scripts.generate_dashboard
       
       - name: Save data lake for next run
         uses: actions/cache@v4
