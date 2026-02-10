@@ -20,7 +20,7 @@ class YFinanceClient:
     """
     
     def __init__(self, rate_limit_delay: float = 0.5):
-       """Initialize yFinance client.
+        """Initialize yFinance client.
         
         Args:
             rate_limit_delay: Seconds to wait between ticker requests
